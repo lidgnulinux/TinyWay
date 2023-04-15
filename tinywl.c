@@ -94,6 +94,7 @@ struct tinywl_view {
 	struct tinywl_server *server;
 	struct wlr_xdg_toplevel *xdg_toplevel;
 	struct wlr_scene_tree *scene_tree;
+	struct wlr_xdg_surface *xdg_surface;
 	struct wl_listener map;
 	struct wl_listener unmap;
 	struct wl_listener destroy;
@@ -101,6 +102,8 @@ struct tinywl_view {
 	struct wl_listener request_resize;
 	struct wl_listener request_maximize;
 	struct wl_listener request_fullscreen;
+	int x, y, w, h;
+	int sx, sy, sw, sh;	/* saved */
 };
 
 struct tinywl_keyboard {
@@ -156,6 +159,25 @@ output_manager_test(struct wl_listener *listener, void *data)
 {
 
 	printf("%s\n", __func__);
+}
+
+static struct tinywl_view *
+view_from_surface(struct tinywl_server *server, struct wlr_surface *surface)
+{
+	struct wlr_xdg_surface *xdg_surface;
+	struct wlr_scene_node *scene_node;
+	struct tinywl_view *view;
+
+	xdg_surface = wlr_xdg_surface_try_from_wlr_surface(surface);
+	assert(xdg_surface != NULL);
+
+	scene_node = xdg_surface->data;
+
+	view = scene_node->data;
+
+	assert(view != NULL);
+
+	return (view);
 }
 
 static struct wlr_virtual_keyboard_manager_v1 *virtual_keyboard_mgr;
@@ -219,6 +241,56 @@ static void keyboard_handle_modifiers(
 		&keyboard->wlr_keyboard->modifiers);
 }
 
+static void
+maximize(struct tinywl_server *server)
+{
+	struct wlr_surface *surface;
+	struct wlr_output *output;
+	struct tinywl_output *out;
+	struct tinywl_view *view;
+	struct wlr_seat *seat;
+	int lebar = 1366;
+	int tinggi = 768;
+
+	seat = server->seat;
+
+	surface = seat->keyboard_state.focused_surface;
+	if (!surface)
+		return;
+
+	view = view_from_surface(server, surface);
+
+	view->sx = view->x;
+	view->sy = view->y;
+	view->sw = view->w;
+	view->sh = view->h;
+
+	if (view->x < 0 || view->y < 0)
+	{
+		view->x = 0;
+		view->y = 0;
+	}
+
+	out = output_at(server, view->x, view->y);
+	output = out->wlr_output;
+//
+//	if ((view->x + view->w) > output->width || (view->y + view->h) > output->height)
+//	{
+//		view->x = 0;
+//		view->y = 0;
+//	}
+
+	view->x = 0;
+	view->y = 0;
+	view->w = output->width;
+	view->h = output->height;
+
+	wlr_scene_node_set_position(&view->scene_tree->node,
+			view->x, view->y); 
+	wlr_xdg_toplevel_set_size(view->xdg_toplevel, view->w, view->h);
+	wlr_scene_node_raise_to_top(&view->scene_tree->node);
+}
+
 static bool handle_keybinding(struct tinywl_server *server, xkb_keysym_t sym) {
 	/*
 	 * Here we handle compositor keybindings. This is when the compositor is
@@ -247,6 +319,9 @@ static bool handle_keybinding(struct tinywl_server *server, xkb_keysym_t sym) {
 		struct tinywl_view *next_view = wl_container_of(
 			server->views.prev, next_view, link);
 		focus_view(next_view, next_view->xdg_toplevel->base->surface);
+		break;
+	case XKB_KEY_f:
+		maximize(server);
 		break;
 	default:
 		return false;
@@ -730,6 +805,7 @@ static void server_new_output(struct wl_listener *listener, void *data) {
 	struct tinywl_output *output =
 		calloc(1, sizeof(struct tinywl_output));
 	output->wlr_output = wlr_output;
+	wlr_output->data = output;
 	output->server = server;
 
 	/* Sets up a listener for the frame event. */
