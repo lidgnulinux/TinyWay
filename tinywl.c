@@ -249,8 +249,6 @@ maximize(struct tinywl_server *server)
 	struct tinywl_output *out;
 	struct tinywl_view *view;
 	struct wlr_seat *seat;
-	int lebar = 1366;
-	int tinggi = 768;
 
 	seat = server->seat;
 
@@ -273,12 +271,12 @@ maximize(struct tinywl_server *server)
 
 	out = output_at(server, view->x, view->y);
 	output = out->wlr_output;
-//
-//	if ((view->x + view->w) > output->width || (view->y + view->h) > output->height)
-//	{
-//		view->x = 0;
-//		view->y = 0;
-//	}
+
+	if ((view->x + view->w) > output->width || (view->y + view->h) > output->height)
+	{
+		view->x = 0;
+		view->y = 0;
+	}
 
 	view->x = 0;
 	view->y = 0;
