@@ -34,6 +34,8 @@
 
 #include "config_tinywl.h"
 
+#define SHFTKEY WLR_MODIFIER_SHIFT
+
 /* For brevity's sake, struct members are annotated where they are used. */
 enum tinywl_cursor_mode {
 	TINYWL_CURSOR_PASSTHROUGH,
@@ -366,7 +368,7 @@ static bool handle_keybinding(struct tinywl_server *server, xkb_keysym_t sym) {
 			server->views.prev, next_view, link);
 		focus_view(next_view, next_view->xdg_toplevel->base->surface);
 		break;
-	case XKB_KEY_f:
+	case XKB_KEY_F:
 		maximize(server);
 		break;
 	case XKB_KEY_h:
@@ -399,7 +401,7 @@ static void keyboard_handle_key(
 
 	bool handled = false;
 	uint32_t modifiers = wlr_keyboard_get_modifiers(keyboard->wlr_keyboard);
-	if ((modifiers & WLR_MODIFIER_ALT) &&
+	if (((modifiers == WLR_MODIFIER_ALT) || (modifiers == (WLR_MODIFIER_ALT | SHFTKEY))) &&
 			event->state == WL_KEYBOARD_KEY_STATE_PRESSED) {
 		/* If alt is held down and this button was _pressed_, we attempt to
 		 * process it as a compositor keybinding. */
