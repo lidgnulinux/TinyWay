@@ -292,6 +292,24 @@ maximize(struct tinywl_server *server)
 }
 
 static void
+killclient(struct tinywl_server *server)
+{
+	struct wlr_surface *surface;
+	struct tinywl_view *view;
+	struct wlr_seat *seat;
+
+	seat = server->seat;
+
+	surface = seat->keyboard_state.focused_surface;
+	if (!surface)
+		return;
+
+	view = view_from_surface(server, surface);
+	wlr_xdg_toplevel_send_close(view->xdg_toplevel);
+
+}
+
+static void
 maxvert_lr(struct tinywl_server *server, int factor)
 {
 	struct wlr_surface *surface;
@@ -339,6 +357,56 @@ maxvert_lr(struct tinywl_server *server, int factor)
 	wlr_scene_node_raise_to_top(&view->scene_tree->node);
 }
 
+static void
+send_lower(struct tinywl_server *server)
+{
+	struct wlr_surface *surface;
+	struct tinywl_view *view;
+	struct wlr_seat *seat;
+
+	seat = server->seat;
+
+	surface = seat->keyboard_state.focused_surface;
+	if (!surface)
+		return;
+
+	view = view_from_surface(server, surface);
+
+	view->sx = view->x;
+	view->sy = view->y;
+	view->sw = view->w;
+	view->sh = view->h;
+
+	wlr_xdg_toplevel_set_size(view->xdg_toplevel, view->w, view->h);
+	wlr_scene_node_lower_to_bottom(&view->scene_tree->node);
+
+}
+
+static void
+send_upper(struct tinywl_server *server)
+{
+	struct wlr_surface *surface;
+	struct tinywl_view *view;
+	struct wlr_seat *seat;
+
+	seat = server->seat;
+
+	surface = seat->keyboard_state.focused_surface;
+	if (!surface)
+		return;
+
+	view = view_from_surface(server, surface);
+
+	view->sx = view->x;
+	view->sy = view->y;
+	view->sw = view->w;
+	view->sh = view->h;
+
+	wlr_xdg_toplevel_set_size(view->xdg_toplevel, view->w, view->h);
+	wlr_scene_node_raise_to_top(&view->scene_tree->node);
+
+}
+
 static bool handle_keybinding(struct tinywl_server *server, xkb_keysym_t sym) {
 	/*
 	 * Here we handle compositor keybindings. This is when the compositor is
@@ -376,6 +444,15 @@ static bool handle_keybinding(struct tinywl_server *server, xkb_keysym_t sym) {
 		break;
 	case XKB_KEY_l:
 		maxvert_lr(server, 1);
+		break;
+	case XKB_KEY_q:
+		killclient(server);
+		break;
+	case XKB_KEY_j:
+		send_lower(server);
+		break;
+	case XKB_KEY_k:
+		send_upper(server);
 		break;
 	default:
 		return false;
