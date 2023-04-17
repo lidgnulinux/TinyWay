@@ -23,5 +23,9 @@ tinywl: tinywl.c xdg-shell-protocol.h
 clean:
 	rm -f tinywl xdg-shell-protocol.h xdg-shell-protocol.c
 
+install: tinywl
+	mkdir -p $(HOME)/.local/bin
+	cp -r tinywl $(HOME)/.local/bin
+
 .DEFAULT_GOAL=tinywl
 .PHONY: clean
