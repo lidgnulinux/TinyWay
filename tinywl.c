@@ -358,6 +358,82 @@ maxvert_lr(struct tinywl_server *server, int factor)
 }
 
 static void
+move_resize(struct tinywl_server *server, int stepx, int stepy, int stepw, int steph)
+{
+	struct wlr_surface *surface;
+	struct wlr_output *output;
+	struct tinywl_output *out;
+	struct tinywl_view *view;
+	struct wlr_seat *seat;
+
+	seat = server->seat;
+
+	surface = seat->keyboard_state.focused_surface;
+	if (!surface)
+		return;
+
+	view = view_from_surface(server, surface);
+
+	view->sx = view->x;
+	view->sy = view->y;
+	view->sw = view->w;
+	view->sh = view->h;
+
+	if (view->x < 0 || view->y < 0)
+	{
+		view->x = 0;
+		view->y = 0;
+	}
+
+	out = output_at(server, view->x, view->y);
+	output = out->wlr_output;
+
+	if ((view->x + view->w) > output->width || (view->y + view->h) > output->height)
+	{
+		view->x = 0;
+		view->y = 0;
+	}
+
+	view->x = view->sx + stepx;
+	view->y = view->sy + stepy;
+	view->w = view->sw + stepw;
+	view->h = view->sh + steph;
+
+	wlr_scene_node_set_position(&view->scene_tree->node,
+			(view->x), (view->y)); 
+	wlr_xdg_toplevel_set_size(view->xdg_toplevel, view->w, view->h);
+	wlr_scene_node_raise_to_top(&view->scene_tree->node);
+}
+
+static void
+show_geom(struct tinywl_server *server)
+{
+	struct wlr_surface *surface;
+	struct wlr_output *output;
+	struct tinywl_output *out;
+	struct tinywl_view *view;
+	struct wlr_seat *seat;
+
+	seat = server->seat;
+
+	surface = seat->keyboard_state.focused_surface;
+	if (!surface)
+		return;
+
+	view = view_from_surface(server, surface);
+
+	view->sx = view->x;
+	view->sy = view->y;
+	view->sw = view->w;
+	view->sh = view->h;
+
+	printf("%s: view geoms %d %d %d %d\n", __func__, view->x, view->y,
+	    view->w, view->h);
+
+	fflush(stdout);
+	}
+
+static void
 send_lower(struct tinywl_server *server)
 {
 	struct wlr_surface *surface;
@@ -453,6 +529,33 @@ static bool handle_keybinding(struct tinywl_server *server, xkb_keysym_t sym) {
 		break;
 	case XKB_KEY_k:
 		send_upper(server);
+		break;
+	case XKB_KEY_Right:
+		move_resize(server, 40, 0, 0, 0);
+		break;
+	case XKB_KEY_Left:
+		move_resize(server, -40, 0, 0, 0);
+		break;
+	case XKB_KEY_Up:
+		move_resize(server, 0, -40, 0, 0);
+		break;
+	case XKB_KEY_Down:
+		move_resize(server, 0, 40, 0, 0);
+		break;
+	case XKB_KEY_L:
+		move_resize(server, 0, 0, 40, 0);
+		break;
+	case XKB_KEY_H:
+		move_resize(server, 0, 0, -40, 0);
+		break;
+	case XKB_KEY_J:
+		move_resize(server, 0, 0, 0, 40);
+		break;
+	case XKB_KEY_K:
+		move_resize(server, 0, 0, 0, -40);
+		break;
+	case XKB_KEY_g:
+		show_geom(server);
 		break;
 	default:
 		return false;
@@ -692,10 +795,12 @@ static void reset_cursor_mode(struct tinywl_server *server) {
 
 static void process_cursor_move(struct tinywl_server *server, uint32_t time) {
 	/* Move the grabbed view to the new position. */
-	struct tinywl_view *view = server->grabbed_view;
-	wlr_scene_node_set_position(&view->scene_tree->node,
-		server->cursor->x - server->grab_x,
-		server->cursor->y - server->grab_y);
+	struct tinywl_view *view;
+
+	view = server->grabbed_view;
+	view->x = server->cursor->x - server->grab_x;
+	view->y = server->cursor->y - server->grab_y;
+	wlr_scene_node_set_position(&view->scene_tree->node, view->x, view->y);
 }
 
 static void process_cursor_resize(struct tinywl_server *server, uint32_t time) {
