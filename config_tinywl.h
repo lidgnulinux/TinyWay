@@ -20,4 +20,19 @@ static const uint32_t send_events_mode = LIBINPUT_CONFIG_SEND_EVENTS_ENABLED;
 static const enum libinput_config_accel_profile accel_profile = LIBINPUT_CONFIG_ACCEL_PROFILE_ADAPTIVE;
 
 static const double accel_speed = 0.0;
-static const unsigned int gapsize = 7;
+static const unsigned int gapsize = 10;
+
+typedef struct {
+	const char *app_id;
+	int x;
+	int y;
+} Rule;
+
+static const Rule rules[] = {
+	/* app_id, 		x,	y */
+
+	{ "mpv", 		50, 	50 },
+	{ "xfce4-appfinder", 	5, 	20 },
+	{ "termbar", 	7, 	7 },
+
+};
