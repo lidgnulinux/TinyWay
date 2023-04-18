@@ -1215,11 +1215,46 @@ static void server_new_output(struct wl_listener *listener, void *data) {
 	wlr_output_layout_add_auto(server->output_layout, wlr_output);
 }
 
+static void
+view_align(struct tinywl_view *view)
+{
+	struct wlr_box geom;
+	struct tinywl_output *out;
+	struct wlr_output *output;
+
+	out = cursor_at(view->server);
+	output = out->wlr_output;
+
+	wlr_xdg_surface_get_geometry(view->xdg_toplevel->base, &geom);
+
+	printf("%s: view geoms %d %d %d %d\n", __func__, geom.x, geom.y,
+	    geom.width, geom.height);
+
+	view->w = geom.width;
+	view->h = geom.height;
+	view->x = (output->width - geom.width) / 2;
+	view->y = (output->height - geom.height) / 2;
+}
+
+static void
+view_geometry(struct tinywl_view *view, struct wlr_box *geom)
+{
+	wlr_xdg_surface_get_geometry(view->xdg_toplevel->base, geom);
+}
+
 static void xdg_toplevel_map(struct wl_listener *listener, void *data) {
 	/* Called when the surface is mapped, or ready to display on-screen. */
+	struct wlr_box geom;
 	struct tinywl_view *view = wl_container_of(listener, view, map);
 
 	wl_list_insert(&view->server->views, &view->link);
+
+	view_align(view);
+
+	view_geometry(view, &geom);
+
+	wlr_scene_node_set_position(&view->scene_tree->node, view->x, view->y);
+	wlr_xdg_toplevel_set_size(view->xdg_toplevel, view->w, view->h);
 
 	focus_view(view, view->xdg_toplevel->base->surface);
 }
@@ -1385,6 +1420,9 @@ static void server_new_xdg_surface(struct wl_listener *listener, void *data) {
 	view->request_fullscreen.notify = xdg_toplevel_request_fullscreen;
 	wl_signal_add(&toplevel->events.request_fullscreen,
 		&view->request_fullscreen);
+
+	wlr_scene_node_set_position(&view->scene_tree->node, view->x, view->y);
+	wlr_xdg_toplevel_set_size(view->xdg_toplevel, view->w, view->h);
 }
 
 int main(int argc, char *argv[]) {
