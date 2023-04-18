@@ -12,4 +12,4 @@ Tinywl dengan beberapa fitur tambahan, di antaranya :
     - maximize jendela.
 - launcher (wofi).
 - Protokol screencopy untuk mendukung screenshot.
-- 
+- window menu dengan yad (fitur mendatang).
