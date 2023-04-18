@@ -292,6 +292,92 @@ maximize(struct tinywl_server *server)
 }
 
 static void
+snap_edge_lr(struct tinywl_server *server, int factor)
+{
+	struct wlr_surface *surface;
+	struct wlr_output *output;
+	struct tinywl_output *out;
+	struct tinywl_view *view;
+	struct wlr_seat *seat;
+
+	seat = server->seat;
+
+	surface = seat->keyboard_state.focused_surface;
+	if (!surface)
+		return;
+
+	view = view_from_surface(server, surface);
+
+	view->sx = view->x;
+	view->sy = view->y;
+	view->sw = view->w;
+	view->sh = view->h;
+
+	if (view->x < 0 || view->y < 0)
+	{
+		view->x = 0;
+		view->y = 0;
+	}
+
+	out = output_at(server, view->x, view->y);
+	output = out->wlr_output;
+
+	if ((view->x + view->w) > output->width || (view->y + view->h) > output->height)
+	{
+		view->x = 0;
+		view->y = 0;
+	}
+
+	view->x = gapsize + ((output->width - view->sw - (2 * gapsize)) * factor);
+
+	wlr_scene_node_set_position(&view->scene_tree->node, view->x, view->y);
+	wlr_scene_node_raise_to_top(&view->scene_tree->node);
+}
+
+static void
+snap_edge_tb(struct tinywl_server *server, int factor)
+{
+	struct wlr_surface *surface;
+	struct wlr_output *output;
+	struct tinywl_output *out;
+	struct tinywl_view *view;
+	struct wlr_seat *seat;
+
+	seat = server->seat;
+
+	surface = seat->keyboard_state.focused_surface;
+	if (!surface)
+		return;
+
+	view = view_from_surface(server, surface);
+
+	view->sx = view->x;
+	view->sy = view->y;
+	view->sw = view->w;
+	view->sh = view->h;
+
+	if (view->x < 0 || view->y < 0)
+	{
+		view->x = 0;
+		view->y = 0;
+	}
+
+	out = output_at(server, view->x, view->y);
+	output = out->wlr_output;
+
+	if ((view->x + view->w) > output->width || (view->y + view->h) > output->height)
+	{
+		view->x = 0;
+		view->y = 0;
+	}
+
+	view->y = gapsize + ((output->height - view->sh - (2 * gapsize)) * factor);
+
+	wlr_scene_node_set_position(&view->scene_tree->node, view->x, view->y);
+	wlr_scene_node_raise_to_top(&view->scene_tree->node);
+}
+
+static void
 killclient(struct tinywl_server *server)
 {
 	struct wlr_surface *surface;
@@ -434,6 +520,50 @@ show_geom(struct tinywl_server *server)
 	}
 
 static void
+half_width_height(struct tinywl_server *server)
+{
+	struct wlr_surface *surface;
+	struct wlr_output *output;
+	struct tinywl_output *out;
+	struct tinywl_view *view;
+	struct wlr_seat *seat;
+
+	seat = server->seat;
+
+	surface = seat->keyboard_state.focused_surface;
+	if (!surface)
+		return;
+
+	view = view_from_surface(server, surface);
+
+	view->sx = view->x;
+	view->sy = view->y;
+	view->sw = view->w;
+	view->sh = view->h;
+
+	if (view->x < 0 || view->y < 0)
+	{
+		view->x = 0;
+		view->y = 0;
+	}
+
+	out = output_at(server, view->x, view->y);
+	output = out->wlr_output;
+
+	if ((view->x + view->w) > output->width || (view->y + view->h) > output->height)
+	{
+		view->x = 0;
+		view->y = 0;
+	}
+
+	view->w = (output->width - (3 * gapsize)) / 2;
+	view->h = (output->height - (3 * gapsize)) / 2;
+
+	wlr_xdg_toplevel_set_size(view->xdg_toplevel, view->w, view->h);
+	wlr_scene_node_raise_to_top(&view->scene_tree->node);
+}
+
+static void
 send_lower(struct tinywl_server *server)
 {
 	struct wlr_surface *surface;
@@ -556,6 +686,21 @@ static bool handle_keybinding(struct tinywl_server *server, xkb_keysym_t sym) {
 		break;
 	case XKB_KEY_g:
 		show_geom(server);
+		break;
+	case XKB_KEY_R:
+		snap_edge_lr(server, 1);
+		break;
+	case XKB_KEY_E:
+		snap_edge_lr(server, 0);
+		break;
+	case XKB_KEY_W:
+		snap_edge_tb(server, 1);
+		break;
+	case XKB_KEY_T:
+		snap_edge_tb(server, 0);
+		break;
+	case XKB_KEY_percent:
+		half_width_height(server);
 		break;
 	default:
 		return false;
