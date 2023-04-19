@@ -25,7 +25,6 @@
 #include <wlr/types/wlr_seat.h>
 #include <wlr/types/wlr_subcompositor.h>
 #include <wlr/types/wlr_xcursor_manager.h>
-#include <wlr/types/wlr_xdg_activation_v1.h>
 #include <wlr/types/wlr_xdg_output_v1.h>
 #include <wlr/types/wlr_xdg_shell.h>
 #include <wlr/types/wlr_virtual_keyboard_v1.h>
@@ -36,8 +35,6 @@
 #include "config_tinywl.h"
 
 #define SHFTKEY WLR_MODIFIER_SHIFT
-#define END(A)                  ((A) + LENGTH(A))
-#define LENGTH(X)               (sizeof X / sizeof X[0])
 
 /* For brevity's sake, struct members are annotated where they are used. */
 enum tinywl_cursor_mode {
@@ -83,8 +80,6 @@ struct tinywl_server {
 	struct wlr_output_manager_v1 *output_manager;
 	struct wl_listener output_manager_apply;
 	struct wl_listener output_manager_test;
-	struct wlr_xdg_activation_v1 *activation;
-	struct wl_listener request_activate;
 };
 
 struct tinywl_output {
@@ -145,13 +140,6 @@ cursor_at(struct tinywl_server *server)
 	assert(out != NULL);
 
 	return (out);
-}
-
-void
-request_activate(struct wl_listener *listener, void *data)
-{
-
-	printf("%s\n", __func__);
 }
 
 void
@@ -1301,51 +1289,6 @@ view_geometry(struct tinywl_view *view, struct wlr_box *geom)
 	wlr_xdg_surface_get_geometry(view->xdg_toplevel->base, geom);
 }
 
-static const char *
-get_app_id(struct tinywl_view *view)
-{
-	const char *res;
-
-	res = view->xdg_toplevel->app_id;
-
-	return (res);
-}
-
-static void
-set_client_geometry(struct tinywl_view *view, int pos_x, int pos_y)
-{
-	struct wlr_box geom;
-	struct tinywl_output *out;
-	struct wlr_output *output;
-
-	out = cursor_at(view->server);
-	output = out->wlr_output;
-
-	wlr_xdg_surface_get_geometry(view->xdg_toplevel->base, &geom);
-
-	printf("%s: view geoms %d %d %d %d\n", __func__, geom.x, geom.y,
-	    geom.width, geom.height);
-
-	view->w = geom.width;
-	view->h = geom.height;
-	view->x = pos_x;
-	view->y = pos_y;
-}
-
-static void
-applyrules(struct tinywl_view *view)
-{
-	const char *app_id;
-	const Rule *r;
-	struct wlr_box geom;
-
-	for (r = rules; r < END(rules); r++) {
-		app_id = get_app_id(view);
-		if (strcmp(app_id, r->app_id) == 0)
-			set_client_geometry(view, r->x, r->y);
-	}
-}
-
 static void xdg_toplevel_map(struct wl_listener *listener, void *data) {
 	/* Called when the surface is mapped, or ready to display on-screen. */
 	struct wlr_box geom;
@@ -1355,7 +1298,6 @@ static void xdg_toplevel_map(struct wl_listener *listener, void *data) {
 
 	view_align(view);
 
-	applyrules(view);
 	view_geometry(view, &geom);
 
 	wlr_scene_node_set_position(&view->scene_tree->node, view->x, view->y);
@@ -1599,12 +1541,6 @@ int main(int argc, char *argv[]) {
 	wlr_data_device_manager_create(server.wl_display);
 
 	wlr_screencopy_manager_v1_create(server.wl_display);
-
-
-	server.activation = wlr_xdg_activation_v1_create(server.wl_display);
-	server.request_activate.notify = request_activate;
-	wl_signal_add(&server.activation->events.request_activate,
-	    &server.request_activate);
 	/* Creates an output layout, which a wlroots utility for working with an
 	 * arrangement of screens in a physical layout. */
 	server.output_layout = wlr_output_layout_create();
