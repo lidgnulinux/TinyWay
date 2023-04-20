@@ -630,6 +630,7 @@ send_lower(struct tinywl_server *server)
 
 	wlr_xdg_toplevel_set_size(view->xdg_toplevel, view->w, view->h);
 	wlr_scene_node_lower_to_bottom(&view->scene_tree->node);
+	wlr_seat_keyboard_notify_clear_focus(server->seat);
 
 }
 
