@@ -89,6 +89,7 @@ struct tinywl_output {
 	struct wl_listener frame;
 	struct wl_listener request_state;
 	struct wl_listener destroy;
+	struct wlr_scene_rect *background;
 };
 
 struct tinywl_view {
@@ -1232,6 +1233,7 @@ static void server_new_output(struct wl_listener *listener, void *data) {
 	/* Allocates and configures our state for this output */
 	struct tinywl_output *output =
 		calloc(1, sizeof(struct tinywl_output));
+	struct tinywl_view *view;
 	output->wlr_output = wlr_output;
 	wlr_output->data = output;
 	output->server = server;
@@ -1239,6 +1241,9 @@ static void server_new_output(struct wl_listener *listener, void *data) {
 	/* Sets up a listener for the frame event. */
 	output->frame.notify = output_frame;
 	wl_signal_add(&wlr_output->events.frame, &output->frame);
+
+	/* set background */
+	output->background = wlr_scene_rect_create(&server->scene->tree, output->wlr_output->width, output->wlr_output->height, back_color);
 
 	/* Sets up a listener for the state request event. */
 	output->request_state.notify = output_request_state;

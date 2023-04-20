@@ -2,6 +2,9 @@
 static char terminal[] = "foot";
 static char launcher[] = "wofi";
 
+/* background color */
+static const float back_color[] = { 0.0, 0.3, 0.5, 1.0 };
+
 /* Trackpad */
 static const int tap_to_click = 1;
 static const int tap_and_drag = 1;
