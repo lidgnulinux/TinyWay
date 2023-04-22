@@ -31,6 +31,8 @@
 #include <wlr/util/log.h>
 #include <xkbcommon/xkbcommon.h>
 #include <libinput.h>
+#include <wlr/types/wlr_primary_selection.h>
+#include <wlr/types/wlr_primary_selection_v1.h>
 
 #include "config_tinywl.h"
 
@@ -66,6 +68,7 @@ struct tinywl_server {
 	struct wl_listener new_input;
 	struct wl_listener request_cursor;
 	struct wl_listener request_set_selection;
+	struct wl_listener request_set_primary_selection;
 	struct wl_list keyboards;
 	enum tinywl_cursor_mode cursor_mode;
 	struct tinywl_view *grabbed_view;
@@ -1478,6 +1481,23 @@ static void server_new_xdg_surface(struct wl_listener *listener, void *data) {
 	wlr_xdg_toplevel_set_size(view->xdg_toplevel, view->w, view->h);
 }
 
+static void
+seat_request_set_primary_selection(struct wl_listener *listener, void *data)
+{
+	struct wlr_seat_request_set_primary_selection_event *event;
+	struct tinywl_server *server;
+
+	printf("%s\n", __func__);
+
+	server = wl_container_of(listener, server,
+	    request_set_primary_selection);
+
+	event = data;
+
+	wlr_seat_set_primary_selection(server->seat, event->source,
+	    event->serial);
+}
+
 int main(int argc, char *argv[]) {
 	wlr_log_init(WLR_DEBUG, NULL);
 	char *startup_cmd = NULL;
@@ -1547,6 +1567,7 @@ int main(int argc, char *argv[]) {
 	wlr_data_device_manager_create(server.wl_display);
 
 	wlr_screencopy_manager_v1_create(server.wl_display);
+	wlr_primary_selection_v1_device_manager_create(server.wl_display);
 	/* Creates an output layout, which a wlroots utility for working with an
 	 * arrangement of screens in a physical layout. */
 	server.output_layout = wlr_output_layout_create();
