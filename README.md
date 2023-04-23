@@ -13,9 +13,11 @@ Fitur tambahan di antaranya :
     - resize ke kiri, kanan, atas, bawah dan setengah tinggi dan lebar layar.
     - maximize jendela.
     - snap jendela ke pojok kiri, kanan, atas, bawah.
+    - pseudo minimze.
 - launcher (wofi).
 - Protokol screencopy untuk mendukung screenshot.
-- window menu dengan yad (fitur mendatang).
+- Protokol primary selection.
+- Fitur warna background.
 
 Secara default shortcut yang tersedia :
 
@@ -29,8 +31,19 @@ Secara default shortcut yang tersedia :
 - mod + j : mengirim jendela ke posisi paling bawah.
 - mod + k : mengirim jendela ke posisi paling atas.
 - mod + {left, right, up, down} : memindah / move jendela ke arah kiri, kanan, atas dan bawah.
-- mod + + shift + {l, h, k, j} : resize ukuran jendela ke arah kanan, kiri, atas, dan bawah.
-- mod + + shift + {r, e, t, w} : memindah jendela ke arah pojok kanan, kiri, atas, dan bawah.
+- mod + shift + {l, h, k, j} : resize ukuran jendela ke arah kanan, kiri, atas, dan bawah.
+- mod + shift + {r, e, t, w} : memindah jendela ke arah pojok kanan, kiri, atas, dan bawah.
+- mod + F1 : cycle window.
+
+## Cara *build*, *install* dan *run*.
+
+Berikut adalah cara untuk *build*, menginstall dan *run* tinywl-next :
+
+1. Sesuaikan pengaturan / konfigurasi di `config_tinywl.h` !
+1. Sesuaikan keybind / shortcut di `tinywl.c` pada bagian fungsi `handle_keybinding` (opsional) ! 
+1. *Build* dengan perintah `make` !
+1. *Install* dengan perintah `make install` ! Tinywl-next akan terinstall di `$HOME/.local/bin/`.
+1. Tinywl-next bisa langsung dijalankan dengan perintah `$HOME/.local/bin/tinywl`.
 
 ## Issue dan bug.
 
