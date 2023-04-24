@@ -682,11 +682,8 @@ static bool handle_keybinding(struct tinywl_server *server, xkb_keysym_t sym) {
 		if (fork() == 0)
 			execl("/bin/sh", "/bin/sh", "-c", launcher, NULL);
 		break;
-	case XKB_KEY_F1:
+	case XKB_KEY_Tab:
 		/* Cycle to the next view */
-		if (wl_list_length(&server->views) < 2) {
-			break;
-		}
 		struct tinywl_view *next_view = wl_container_of(
 			server->views.prev, next_view, link);
 		focus_view(next_view, next_view->xdg_toplevel->base->surface);
