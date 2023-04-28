@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include <wayland-server-core.h>
 #include <wlr/backend.h>
+#include <wlr/backend/session.h>
 #include <wlr/backend/libinput.h>
 #include <wlr/render/allocator.h>
 #include <wlr/render/wlr_renderer.h>
@@ -51,6 +52,7 @@ struct tinywl_server {
 	struct wlr_renderer *renderer;
 	struct wlr_allocator *allocator;
 	struct wlr_scene *scene;
+	struct wlr_session *session;
 
 	struct wlr_xdg_shell *xdg_shell;
 	struct wl_listener new_xdg_surface;
@@ -662,6 +664,14 @@ send_upper(struct tinywl_server *server)
 
 }
 
+static void
+chvt(struct tinywl_server *server, unsigned int to_vt)
+{
+	if (server->session) {
+		wlr_session_change_vt(server->session, to_vt);
+	}
+}
+
 static bool handle_keybinding(struct tinywl_server *server, xkb_keysym_t sym) {
 	/*
 	 * Here we handle compositor keybindings. This is when the compositor is
@@ -750,6 +760,21 @@ static bool handle_keybinding(struct tinywl_server *server, xkb_keysym_t sym) {
 		break;
 	case XKB_KEY_C:
 		move_to_center(server);
+		break;
+	case XKB_KEY_F1:
+		chvt(server, 1);
+		break;
+	case XKB_KEY_F2:
+		chvt(server, 2);
+		break;
+	case XKB_KEY_F3:
+		chvt(server, 3);
+		break;
+	case XKB_KEY_F4:
+		chvt(server, 4);
+		break;
+	case XKB_KEY_F5:
+		chvt(server, 5);
 		break;
 	default:
 		return false;
@@ -1523,7 +1548,7 @@ int main(int argc, char *argv[]) {
 	 * output hardware. The autocreate option will choose the most suitable
 	 * backend based on the current environment, such as opening an X11 window
 	 * if an X11 server is running. */
-	server.backend = wlr_backend_autocreate(server.wl_display, NULL);
+	server.backend = wlr_backend_autocreate(server.wl_display, &server.session);
 	if (server.backend == NULL) {
 		wlr_log(WLR_ERROR, "failed to create wlr_backend");
 		return 1;
