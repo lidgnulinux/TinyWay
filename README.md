@@ -18,6 +18,7 @@ Fitur tambahan di antaranya :
 - Protokol screencopy untuk mendukung screenshot.
 - Protokol primary selection.
 - Fitur warna background.
+- Fungsi berpindah ke VT / virtual terminal.
 
 Secara default shortcut yang tersedia :
 
@@ -33,7 +34,8 @@ Secara default shortcut yang tersedia :
 - mod + {left, right, up, down} : memindah / move jendela ke arah kiri, kanan, atas dan bawah.
 - mod + shift + {l, h, k, j} : resize ukuran jendela ke arah kanan, kiri, atas, dan bawah.
 - mod + shift + {r, e, t, w} : memindah jendela ke arah pojok kanan, kiri, atas, dan bawah.
-- mod + F1 : cycle window.
+- mod + Tab : cycle window.
+- mod + {F1,F2,..F5} : berpindah ke virtual terminal 1 sampai 5.
 
 ## Cara *build*, *install* dan *run*.
 
