@@ -24,3 +24,6 @@ static const enum libinput_config_accel_profile accel_profile = LIBINPUT_CONFIG_
 
 static const double accel_speed = 0.0;
 static const unsigned int gapsize = 7;
+
+/* exclusive zone*/
+static const unsigned int exczone = 32;

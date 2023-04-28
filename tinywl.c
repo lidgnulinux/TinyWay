@@ -124,6 +124,8 @@ struct tinywl_keyboard {
 	struct wl_listener destroy;
 };
 
+static int enable_exczone = 1;
+
 static struct tinywl_output *
 output_at(struct tinywl_server *server, double x, double y)
 {
@@ -257,6 +259,7 @@ maximize(struct tinywl_server *server)
 	struct tinywl_output *out;
 	struct tinywl_view *view;
 	struct wlr_seat *seat;
+	unsigned int eexz = enable_exczone;
 
 	seat = server->seat;
 
@@ -286,10 +289,10 @@ maximize(struct tinywl_server *server)
 		view->y = 0;
 	}
 
-	view->x = 0;
-	view->y = 0;
-	view->w = output->width;
-	view->h = output->height;
+	view->x = gapsize + ((eexz * exczone) + (gapsize * eexz));
+	view->y = gapsize;
+	view->w = output->width - ( 2 * gapsize ) - ((eexz * exczone) + (gapsize * eexz));
+	view->h = output->height - ( 2 * gapsize );
 
 	wlr_scene_node_set_position(&view->scene_tree->node,
 			view->x, view->y); 
@@ -453,6 +456,7 @@ maxvert_lr(struct tinywl_server *server, int factor)
 	struct tinywl_output *out;
 	struct tinywl_view *view;
 	struct wlr_seat *seat;
+	unsigned int eexz = enable_exczone;
 
 	seat = server->seat;
 
@@ -482,9 +486,9 @@ maxvert_lr(struct tinywl_server *server, int factor)
 		view->y = 0;
 	}
 
-	view->w = (output->width - (3 * gapsize)) / 2;
+	view->w = (output->width - (3 * gapsize) - ((eexz * exczone) + (gapsize * eexz))) / 2;
 	view->h = output->height - (2 * gapsize);
-	view->x = (view->w + gapsize) * factor + gapsize;
+	view->x = (view->w + gapsize) * factor + gapsize + ((eexz * exczone) + (gapsize * eexz));
 	view->y = gapsize;
 
 	wlr_scene_node_set_position(&view->scene_tree->node,
@@ -541,6 +545,12 @@ move_resize(struct tinywl_server *server, int stepx, int stepy, int stepw, int s
 	wlr_scene_node_raise_to_top(&view->scene_tree->node);
 }
 
+void
+toggle_exczone()
+{
+	enable_exczone = !enable_exczone;
+}
+
 static void
 show_geom(struct tinywl_server *server)
 {
@@ -577,6 +587,7 @@ half_width_height(struct tinywl_server *server)
 	struct tinywl_output *out;
 	struct tinywl_view *view;
 	struct wlr_seat *seat;
+	unsigned int eexz = enable_exczone;
 
 	seat = server->seat;
 
@@ -606,7 +617,7 @@ half_width_height(struct tinywl_server *server)
 		view->y = 0;
 	}
 
-	view->w = (output->width - (3 * gapsize)) / 2;
+	view->w = (output->width - (3 * gapsize) - ((eexz * exczone) + (gapsize * eexz))) / 2;
 	view->h = (output->height - (3 * gapsize)) / 2;
 
 	wlr_xdg_toplevel_set_size(view->xdg_toplevel, view->w, view->h);
@@ -775,6 +786,9 @@ static bool handle_keybinding(struct tinywl_server *server, xkb_keysym_t sym) {
 		break;
 	case XKB_KEY_F5:
 		chvt(server, 5);
+		break;
+	case XKB_KEY_z:
+		toggle_exczone();
 		break;
 	default:
 		return false;
