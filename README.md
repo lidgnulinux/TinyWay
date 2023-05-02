@@ -19,6 +19,7 @@ Fitur tambahan di antaranya :
 - Protokol primary selection.
 - Fitur warna background.
 - Fungsi berpindah ke VT / virtual terminal.
+- Zone eksklusif untuk menaruh bar.
 
 Secara default shortcut yang tersedia :
 
@@ -36,6 +37,7 @@ Secara default shortcut yang tersedia :
 - mod + shift + {r, e, t, w} : memindah jendela ke arah pojok kanan, kiri, atas, dan bawah.
 - mod + Tab : cycle window.
 - mod + {F1,F2,..F5} : berpindah ke virtual terminal 1 sampai 5.
+- mod + z : toggle zona eksklusif.
 
 ## Cara *build*, *install* dan *run*.
 
@@ -58,4 +60,9 @@ Ada beberapa issue dan bug yang kami temui di antaranya :
     - mpv : mendisable on-screen-controller dengan opsi `--no-osc`, bisa juga dengan menekan tombol delete.
     - imv : belum kami temukan.
 
-- Bar dan wallpaper setter tidak berjalan. Ini terjadi karena kami belum menerapkan layer shell protocol.
+- Bar / panel dan wallpaper setter tidak berjalan. Ini terjadi karena kami belum menerapkan layer shell protocol.
+
+    solusi :
+
+    - Untuk bar / panel, bisa menggunakan lxqt-panel dan ditaruh di pojok kiri (snap ke kiri / Alt + e).
+    - Untuk wallpaper masih dalam pengembangan.
