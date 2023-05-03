@@ -14,6 +14,7 @@ Fitur tambahan di antaranya :
     - maximize jendela.
     - snap jendela ke pojok kiri, kanan, atas, bawah.
     - pseudo minimze.
+    - fullscreen jendela.
 - launcher (wofi).
 - Protokol screencopy untuk mendukung screenshot.
 - Protokol primary selection.
@@ -27,7 +28,8 @@ Secara default shortcut yang tersedia :
 - mod + p : membuka launcher (wofi).
 - mod + h : maximize jendela arah vertikal ke sebelah kiri.
 - mod + l : maximize jendela arah vertikal ke sebelah kanan.
-- mod + shift + f : maximize jendela.
+- mod + f : maximize jendela.
+- mod + shift + f : fullscreen jendela.
 - mod + esc : keluar / quit kompositor.
 - mod + q : menutup / close jendela.
 - mod + j : mengirim jendela ke posisi paling bawah.
