@@ -645,6 +645,7 @@ send_lower(struct tinywl_server *server)
 	struct wlr_surface *surface;
 	struct tinywl_view *view;
 	struct wlr_seat *seat;
+	const char *app_id;
 
 	seat = server->seat;
 
@@ -660,6 +661,11 @@ send_lower(struct tinywl_server *server)
 	view->sh = view->h;
 
 	wlr_xdg_toplevel_set_size(view->xdg_toplevel, view->w, view->h);
+
+	app_id = get_app_id(view);
+	if (strcmp(app_id, "lxqt-panel") == 0)
+		return;
+
 	wlr_scene_node_lower_to_bottom(&view->scene_tree->node);
 	wlr_seat_keyboard_notify_clear_focus(server->seat);
 
