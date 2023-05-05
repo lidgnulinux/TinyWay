@@ -430,12 +430,23 @@ snap_edge_tb(struct tinywl_server *server, int factor)
 	wlr_scene_node_raise_to_top(&view->scene_tree->node);
 }
 
+static const char *
+get_app_id(struct tinywl_view *view)
+{
+	const char *res;
+
+	res = view->xdg_toplevel->app_id;
+
+	return (res);
+}
+
 static void
 killclient(struct tinywl_server *server)
 {
 	struct wlr_surface *surface;
 	struct tinywl_view *view;
 	struct wlr_seat *seat;
+	const char *app_id;
 
 	seat = server->seat;
 
@@ -444,6 +455,10 @@ killclient(struct tinywl_server *server)
 		return;
 
 	view = view_from_surface(server, surface);
+	app_id = get_app_id(view);
+	if (strcmp(app_id, "lxqt-panel") == 0)
+		return;
+
 	wlr_xdg_toplevel_send_close(view->xdg_toplevel);
 
 }
