@@ -13,7 +13,7 @@ Fitur tambahan di antaranya :
     - resize ke kiri, kanan, atas, bawah dan setengah tinggi dan lebar layar.
     - maximize jendela.
     - snap jendela ke pojok kiri, kanan, atas, bawah.
-    - pseudo minimze.
+    - pseudo minimize.
     - fullscreen jendela.
 - launcher (wofi).
 - Protokol screencopy untuk mendukung screenshot.
@@ -21,6 +21,7 @@ Fitur tambahan di antaranya :
 - Fitur warna background.
 - Fungsi berpindah ke VT / virtual terminal.
 - Zone eksklusif untuk menaruh bar.
+- Rule untuk jendela dengan app_id yang spesifik (contoh: lxqt-panel, imv).
 
 Secara default shortcut yang tersedia :
 
@@ -55,11 +56,14 @@ Berikut adalah cara untuk *build*, menginstall dan *run* tinywl-next :
 
 Ada beberapa issue dan bug yang kami temui di antaranya :
 
-- Beberapa jendela tidak bisa di-resize dari pojok dan bagian atas, bawah, kanan, dan kiri (mpv dan imv).
+- Beberapa jendela tidak bisa di-resize dengan cursor / non-keybind dari pojok dan bagian atas, bawah, kanan, dan kiri (mpv dan imv).
 
     solusi : 
 
-    - mpv : mendisable on-screen-controller dengan opsi `--no-osc`, bisa juga dengan menekan tombol delete.
+    - mpv : 
+        - mendisable on-screen-controller dengan opsi `--no-osc`, bisa juga dengan menekan tombol delete.
+        - resize dari samping kanan bagian tengah.
+
     - imv : belum kami temukan.
 
 - Bar / panel dan wallpaper setter tidak berjalan. Ini terjadi karena kami belum menerapkan layer shell protocol.
@@ -67,4 +71,4 @@ Ada beberapa issue dan bug yang kami temui di antaranya :
     solusi :
 
     - Untuk bar / panel, bisa menggunakan lxqt-panel dan ditaruh di pojok kiri (snap ke kiri / Alt + e).
-    - Untuk wallpaper masih dalam pengembangan.
+    - Untuk wallpaper masih dalam pengembangan, untuk sementara bisa memakai imv untuk mengatur wallpaper.

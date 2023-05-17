@@ -192,6 +192,16 @@ view_from_surface(struct tinywl_server *server, struct wlr_surface *surface)
 
 static struct wlr_virtual_keyboard_manager_v1 *virtual_keyboard_mgr;
 
+static const char *
+get_app_id(struct tinywl_view *view)
+{
+	const char *res;
+
+	res = view->xdg_toplevel->app_id;
+
+	return (res);
+}
+
 static void focus_view(struct tinywl_view *view, struct wlr_surface *surface) {
 	/* Note: this function only deals with keyboard focus. */
 	if (view == NULL) {
@@ -200,6 +210,8 @@ static void focus_view(struct tinywl_view *view, struct wlr_surface *surface) {
 	struct tinywl_server *server = view->server;
 	struct wlr_seat *seat = server->seat;
 	struct wlr_surface *prev_surface = seat->keyboard_state.focused_surface;
+	const char *app_id;
+
 	if (prev_surface == surface) {
 		/* Don't re-focus an already focused surface. */
 		return;
@@ -217,7 +229,10 @@ static void focus_view(struct tinywl_view *view, struct wlr_surface *surface) {
 	}
 	struct wlr_keyboard *keyboard = wlr_seat_get_keyboard(seat);
 	/* Move the view to the front */
-	wlr_scene_node_raise_to_top(&view->scene_tree->node);
+	app_id = get_app_id(view);
+	if (strcmp(app_id, "imv") != 0)
+		wlr_scene_node_raise_to_top(&view->scene_tree->node);
+
 	wl_list_remove(&view->link);
 	wl_list_insert(&server->views, &view->link);
 	/* Activate the new surface */
@@ -430,16 +445,6 @@ snap_edge_tb(struct tinywl_server *server, int factor)
 	wlr_scene_node_raise_to_top(&view->scene_tree->node);
 }
 
-static const char *
-get_app_id(struct tinywl_view *view)
-{
-	const char *res;
-
-	res = view->xdg_toplevel->app_id;
-
-	return (res);
-}
-
 static void
 killclient(struct tinywl_server *server)
 {
@@ -456,7 +461,7 @@ killclient(struct tinywl_server *server)
 
 	view = view_from_surface(server, surface);
 	app_id = get_app_id(view);
-	if (strcmp(app_id, "lxqt-panel") == 0)
+	if (strcmp(app_id, "lxqt-panel") == 0 || strcmp(app_id, "imv") == 0)
 		return;
 
 	wlr_xdg_toplevel_send_close(view->xdg_toplevel);
@@ -663,7 +668,7 @@ send_lower(struct tinywl_server *server)
 	wlr_xdg_toplevel_set_size(view->xdg_toplevel, view->w, view->h);
 
 	app_id = get_app_id(view);
-	if (strcmp(app_id, "lxqt-panel") == 0)
+	if (strcmp(app_id, "lxqt-panel") == 0 || strcmp(app_id, "imv") == 0)
 		return;
 
 	wlr_scene_node_lower_to_bottom(&view->scene_tree->node);
