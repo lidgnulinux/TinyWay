@@ -210,7 +210,6 @@ static void focus_view(struct tinywl_view *view, struct wlr_surface *surface) {
 	struct tinywl_server *server = view->server;
 	struct wlr_seat *seat = server->seat;
 	struct wlr_surface *prev_surface = seat->keyboard_state.focused_surface;
-	const char *app_id;
 
 	if (prev_surface == surface) {
 		/* Don't re-focus an already focused surface. */
@@ -228,10 +227,6 @@ static void focus_view(struct tinywl_view *view, struct wlr_surface *surface) {
 		wlr_xdg_toplevel_set_activated(previous->toplevel, false);
 	}
 	struct wlr_keyboard *keyboard = wlr_seat_get_keyboard(seat);
-	/* Move the view to the front */
-	app_id = get_app_id(view);
-	if (strcmp(app_id, "imv") != 0)
-		wlr_scene_node_raise_to_top(&view->scene_tree->node);
 
 	wl_list_remove(&view->link);
 	wl_list_insert(&server->views, &view->link);
@@ -765,6 +760,8 @@ static bool handle_keybinding(struct tinywl_server *server, xkb_keysym_t sym) {
 	 *
 	 * This function assumes Alt is held down.
 	 */
+	const char *app_id;
+
 	switch (sym) {
 	case XKB_KEY_Escape:
 		wl_display_terminate(server->wl_display);
@@ -784,7 +781,13 @@ static bool handle_keybinding(struct tinywl_server *server, xkb_keysym_t sym) {
 		}
 		struct tinywl_view *next_view = wl_container_of(
 			server->views.prev, next_view, link);
+
 		focus_view(next_view, next_view->xdg_toplevel->base->surface);
+
+		app_id = get_app_id(next_view);
+		if (strcmp(app_id, "imv") != 0)
+			send_upper(server);
+
 		break;
 	case XKB_KEY_f:
 		maximize(server);
