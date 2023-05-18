@@ -1253,6 +1253,7 @@ static void server_cursor_button(struct wl_listener *listener, void *data) {
 	struct tinywl_server *server =
 		wl_container_of(listener, server, cursor_button);
 	struct wlr_pointer_button_event *event = data;
+	const char *app_id;
 	/* Notify the client with pointer focus that a button press has occurred */
 	wlr_seat_pointer_notify_button(server->seat,
 			event->time_msec, event->button, event->state);
@@ -1266,6 +1267,9 @@ static void server_cursor_button(struct wl_listener *listener, void *data) {
 	} else {
 		/* Focus that client if the button was _pressed_ */
 		focus_view(view, surface);
+		app_id = get_app_id(view);
+		if (strcmp(app_id, "imv") != 0)
+			send_upper(server);
 	}
 }
 
@@ -1432,6 +1436,7 @@ static void xdg_toplevel_map(struct wl_listener *listener, void *data) {
 	wlr_xdg_toplevel_set_size(view->xdg_toplevel, view->w, view->h);
 
 	focus_view(view, view->xdg_toplevel->base->surface);
+
 }
 
 static void xdg_toplevel_unmap(struct wl_listener *listener, void *data) {
