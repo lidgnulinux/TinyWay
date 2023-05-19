@@ -192,16 +192,6 @@ view_from_surface(struct tinywl_server *server, struct wlr_surface *surface)
 
 static struct wlr_virtual_keyboard_manager_v1 *virtual_keyboard_mgr;
 
-static const char *
-get_app_id(struct tinywl_view *view)
-{
-	const char *res;
-
-	res = view->xdg_toplevel->app_id;
-
-	return (res);
-}
-
 static void focus_view(struct tinywl_view *view, struct wlr_surface *surface) {
 	/* Note: this function only deals with keyboard focus. */
 	if (view == NULL) {
@@ -210,7 +200,6 @@ static void focus_view(struct tinywl_view *view, struct wlr_surface *surface) {
 	struct tinywl_server *server = view->server;
 	struct wlr_seat *seat = server->seat;
 	struct wlr_surface *prev_surface = seat->keyboard_state.focused_surface;
-
 	if (prev_surface == surface) {
 		/* Don't re-focus an already focused surface. */
 		return;
@@ -227,7 +216,8 @@ static void focus_view(struct tinywl_view *view, struct wlr_surface *surface) {
 		wlr_xdg_toplevel_set_activated(previous->toplevel, false);
 	}
 	struct wlr_keyboard *keyboard = wlr_seat_get_keyboard(seat);
-
+	/* Move the view to the front */
+	wlr_scene_node_raise_to_top(&view->scene_tree->node);
 	wl_list_remove(&view->link);
 	wl_list_insert(&server->views, &view->link);
 	/* Activate the new surface */
@@ -440,6 +430,16 @@ snap_edge_tb(struct tinywl_server *server, int factor)
 	wlr_scene_node_raise_to_top(&view->scene_tree->node);
 }
 
+static const char *
+get_app_id(struct tinywl_view *view)
+{
+	const char *res;
+
+	res = view->xdg_toplevel->app_id;
+
+	return (res);
+}
+
 static void
 killclient(struct tinywl_server *server)
 {
@@ -456,7 +456,7 @@ killclient(struct tinywl_server *server)
 
 	view = view_from_surface(server, surface);
 	app_id = get_app_id(view);
-	if (strcmp(app_id, "lxqt-panel") == 0 || strcmp(app_id, "imv") == 0)
+	if (strcmp(app_id, "lxqt-panel") == 0)
 		return;
 
 	wlr_xdg_toplevel_send_close(view->xdg_toplevel);
@@ -663,7 +663,7 @@ send_lower(struct tinywl_server *server)
 	wlr_xdg_toplevel_set_size(view->xdg_toplevel, view->w, view->h);
 
 	app_id = get_app_id(view);
-	if (strcmp(app_id, "lxqt-panel") == 0 || strcmp(app_id, "imv") == 0)
+	if (strcmp(app_id, "lxqt-panel") == 0)
 		return;
 
 	wlr_scene_node_lower_to_bottom(&view->scene_tree->node);
@@ -760,8 +760,6 @@ static bool handle_keybinding(struct tinywl_server *server, xkb_keysym_t sym) {
 	 *
 	 * This function assumes Alt is held down.
 	 */
-	const char *app_id;
-
 	switch (sym) {
 	case XKB_KEY_Escape:
 		wl_display_terminate(server->wl_display);
@@ -781,13 +779,7 @@ static bool handle_keybinding(struct tinywl_server *server, xkb_keysym_t sym) {
 		}
 		struct tinywl_view *next_view = wl_container_of(
 			server->views.prev, next_view, link);
-
 		focus_view(next_view, next_view->xdg_toplevel->base->surface);
-
-		app_id = get_app_id(next_view);
-		if (strcmp(app_id, "imv") != 0)
-			send_upper(server);
-
 		break;
 	case XKB_KEY_f:
 		maximize(server);
@@ -1253,7 +1245,6 @@ static void server_cursor_button(struct wl_listener *listener, void *data) {
 	struct tinywl_server *server =
 		wl_container_of(listener, server, cursor_button);
 	struct wlr_pointer_button_event *event = data;
-	const char *app_id;
 	/* Notify the client with pointer focus that a button press has occurred */
 	wlr_seat_pointer_notify_button(server->seat,
 			event->time_msec, event->button, event->state);
@@ -1267,9 +1258,6 @@ static void server_cursor_button(struct wl_listener *listener, void *data) {
 	} else {
 		/* Focus that client if the button was _pressed_ */
 		focus_view(view, surface);
-		app_id = get_app_id(view);
-		if (strcmp(app_id, "imv") != 0)
-			send_upper(server);
 	}
 }
 
@@ -1436,7 +1424,6 @@ static void xdg_toplevel_map(struct wl_listener *listener, void *data) {
 	wlr_xdg_toplevel_set_size(view->xdg_toplevel, view->w, view->h);
 
 	focus_view(view, view->xdg_toplevel->base->surface);
-
 }
 
 static void xdg_toplevel_unmap(struct wl_listener *listener, void *data) {
