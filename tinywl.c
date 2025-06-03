@@ -90,6 +90,7 @@ struct tinywl_output {
 	struct wl_listener frame;
 	struct wl_listener request_state;
 	struct wl_listener destroy;
+	struct wlr_scene_rect *background;
 };
 
 struct tinywl_toplevel {
@@ -312,6 +313,32 @@ static void maximize(struct tinywl_server *server)
 	wlr_scene_node_raise_to_top(&toplevel->scene_tree->node);
 }
 
+static void minimize(struct tinywl_server *server)
+{
+	struct wlr_surface *surface;
+	struct wlr_output *output;
+	struct tinywl_output *out;
+	struct tinywl_toplevel *toplevel;
+	struct wlr_seat *seat;
+
+	seat = server->seat;
+
+	surface = seat->keyboard_state.focused_surface;
+	if (!surface)
+		return;
+
+	toplevel = toplevel_from_surface(server, surface);
+
+	toplevel->sx = toplevel->x;
+	toplevel->sy = toplevel->y;
+	toplevel->sw = toplevel->w;
+	toplevel->sh = toplevel->h;
+
+	wlr_xdg_toplevel_set_size(toplevel->xdg_toplevel, toplevel->w, toplevel->h);
+	wlr_scene_node_lower_to_bottom(&toplevel->scene_tree->node);
+	wlr_seat_keyboard_notify_clear_focus(server->seat);
+}
+
 static bool handle_keybinding(struct tinywl_server *server, xkb_keysym_t sym) {
 	/*
 	 * Here we handle compositor keybindings. This is when the compositor is
@@ -337,6 +364,9 @@ static bool handle_keybinding(struct tinywl_server *server, xkb_keysym_t sym) {
 		break;
 	case XKB_KEY_m:
 		maximize(server);
+		break;
+	case XKB_KEY_j:
+		minimize(server);
 		break;
 	case XKB_KEY_F1:
 		/* Cycle to the next toplevel */
@@ -842,6 +872,9 @@ static void server_new_output(struct wl_listener *listener, void *data) {
 	/* Sets up a listener for the frame event. */
 	output->frame.notify = output_frame;
 	wl_signal_add(&wlr_output->events.frame, &output->frame);
+
+	/* set background */
+	output->background = wlr_scene_rect_create(&server->scene->tree, output->wlr_output->width, output->wlr_output->height, back_color);
 
 	/* Sets up a listener for the state request event. */
 	output->request_state.notify = output_request_state;
