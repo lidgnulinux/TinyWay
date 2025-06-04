@@ -31,6 +31,7 @@
 #include <wlr/types/wlr_primary_selection.h>
 #include <wlr/types/wlr_primary_selection_v1.h>
 #include <wlr/types/wlr_viewporter.h>
+#include <wlr/types/wlr_data_control_v1.h>
 #include <libinput.h>
 #include "config_tinywl.h"
 
@@ -1235,7 +1236,10 @@ int main(int argc, char *argv[]) {
 	 * the clients cannot set the selection directly without compositor approval,
 	 * see the handling of the request_set_selection event below.*/
 	wlr_screencopy_manager_v1_create(server.wl_display);
+	wlr_data_control_manager_v1_create(server.wl_display);
+	wlr_data_device_manager_create(server.wl_display);
 	wlr_compositor_create(server.wl_display, 5, server.renderer);
+	wlr_primary_selection_v1_device_manager_create(server.wl_display);
 	wlr_viewporter_create(server.wl_display);
 	wlr_subcompositor_create(server.wl_display);
 	wlr_data_device_manager_create(server.wl_display);
