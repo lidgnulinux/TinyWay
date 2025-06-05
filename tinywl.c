@@ -32,6 +32,7 @@
 #include <wlr/types/wlr_primary_selection_v1.h>
 #include <wlr/types/wlr_viewporter.h>
 #include <wlr/types/wlr_data_control_v1.h>
+#include <wlr/types/wlr_xdg_activation_v1.h>
 #include <libinput.h>
 #include "config_tinywl.h"
 
@@ -79,6 +80,9 @@ struct tinywl_server {
 	struct wl_list outputs;
 	struct wl_listener new_output;
 
+	struct wlr_compositor *compositor;
+	struct wlr_xdg_activation_v1 *activation;
+	struct wl_listener request_activate;
 	struct wl_listener layout_change;
 	struct wlr_output_manager_v1 *output_manager;
 	struct wl_listener output_manager_apply;
@@ -150,6 +154,13 @@ cursor_at(struct tinywl_server *server)
 	assert(out != NULL);
 
 	return (out);
+}
+
+void
+request_activate(struct wl_listener *listener, void *data)
+{
+
+	printf("%s\n", __func__);
 }
 
 void
@@ -1228,6 +1239,8 @@ int main(int argc, char *argv[]) {
 		return 1;
 	}
 
+	server.compositor = wlr_compositor_create(server.wl_display, 5,
+	    server.renderer);
 	/* This creates some hands-off wlroots interfaces. The compositor is
 	 * necessary for clients to allocate surfaces, the subcompositor allows to
 	 * assign the role of subsurfaces to surfaces and the data device manager
@@ -1244,6 +1257,10 @@ int main(int argc, char *argv[]) {
 	wlr_subcompositor_create(server.wl_display);
 	wlr_data_device_manager_create(server.wl_display);
 
+	server.activation = wlr_xdg_activation_v1_create(server.wl_display);
+	server.request_activate.notify = request_activate;
+	wl_signal_add(&server.activation->events.request_activate,
+	    &server.request_activate);
 	/* Creates an output layout, which a wlroots utility for working with an
 	 * arrangement of screens in a physical layout. */
 	server.output_layout = wlr_output_layout_create(server.wl_display);
