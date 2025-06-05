@@ -326,6 +326,53 @@ static void maximize(struct tinywl_server *server)
 	wlr_scene_node_raise_to_top(&toplevel->scene_tree->node);
 }
 
+static void fullscreen(struct tinywl_server *server)
+{
+	struct wlr_surface *surface;
+	struct wlr_output *output;
+	struct tinywl_output *out;
+	struct tinywl_toplevel *toplevel;
+	struct wlr_seat *seat;
+
+	seat = server->seat;
+
+	surface = seat->keyboard_state.focused_surface;
+	if (!surface)
+		return;
+
+	toplevel = toplevel_from_surface(server, surface);
+
+	toplevel->sx = toplevel->x;
+	toplevel->sy = toplevel->y;
+	toplevel->sw = toplevel->w;
+	toplevel->sh = toplevel->h;
+
+	if (toplevel->x < 0 || toplevel->y < 0)
+	{
+		toplevel->x = 0;
+		toplevel->y = 0;
+	}
+
+	out = output_at(server, toplevel->x, toplevel->y);
+	output = out->wlr_output;
+
+	if ((toplevel->x + toplevel->w) > output->width || (toplevel->y + toplevel->h) > output->height)
+	{
+		toplevel->x = 0;
+		toplevel->y = 0;
+	}
+
+	toplevel->x = 0;
+	toplevel->y = 0;
+	toplevel->w = output->width;
+	toplevel->h = output->height;
+
+	wlr_scene_node_set_position(&toplevel->scene_tree->node,
+			toplevel->x, toplevel->y); 
+	wlr_xdg_toplevel_set_size(toplevel->xdg_toplevel, toplevel->w, toplevel->h);
+	wlr_scene_node_raise_to_top(&toplevel->scene_tree->node);
+}
+
 static void minimize(struct tinywl_server *server)
 {
 	struct wlr_surface *surface;
@@ -425,6 +472,9 @@ static bool handle_keybinding(struct tinywl_server *server, xkb_keysym_t sym) {
 		break;
 	case XKB_KEY_m:
 		maximize(server);
+		break;
+	case XKB_KEY_f:
+		fullscreen(server);
 		break;
 	case XKB_KEY_j:
 		minimize(server);
