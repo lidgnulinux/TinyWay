@@ -1,3 +1,5 @@
+#define _POSIX_C_SOURCE 200112L
+
 #include <assert.h>
 #include <getopt.h>
 #include <stdbool.h>
@@ -143,18 +145,6 @@ output_at(struct tinywl_server *server, double x, double y)
 		return (o->data);
 
 	return (NULL);
-}
-
-static struct tinywl_output *
-cursor_at(struct tinywl_server *server)
-{
-	struct tinywl_output *out;
-
-	out = output_at(server, server->cursor->x, server->cursor->y);
-
-	assert(out != NULL);
-
-	return (out);
 }
 
 void
@@ -377,8 +367,6 @@ static void fullscreen(struct tinywl_server *server)
 static void minimize(struct tinywl_server *server)
 {
 	struct wlr_surface *surface;
-	struct wlr_output *output;
-	struct tinywl_output *out;
 	struct tinywl_toplevel *toplevel;
 	struct wlr_seat *seat;
 
@@ -927,7 +915,6 @@ static void output_frame(struct wl_listener *listener, void *data) {
 	wlr_scene_output_commit(scene_output, NULL);
 
 	struct timespec now;
-	clock_gettime(CLOCK_MONOTONIC, &now);
 	wlr_scene_output_send_frame_done(scene_output, &now);
 }
 
@@ -982,7 +969,6 @@ static void server_new_output(struct wl_listener *listener, void *data) {
 
 	/* Allocates and configures our state for this output */
 	struct tinywl_output *output = calloc(1, sizeof(*output));
-	struct tinywl_toplevel *toplevel;
 	output->wlr_output = wlr_output;
 	wlr_output->data = output;
 	output->server = server;
