@@ -37,6 +37,7 @@
 #include <wlr/types/wlr_xdg_activation_v1.h>
 #include <wlr/types/wlr_fractional_scale_v1.h>
 #include <wlr/types/wlr_virtual_pointer_v1.h>
+#include <wlr/types/wlr_virtual_keyboard_v1.h>
 #include <libinput.h>
 #include "config_tinywl.h"
 
@@ -94,6 +95,10 @@ struct tinywl_server {
 
 	struct wlr_virtual_pointer_manager_v1 *virtual_pointer_manager;
 	struct wl_listener new_virtual_pointer;
+
+	struct wlr_virtual_keyboard_manager_v1  *virtual_keyboard_manager;
+	struct wl_listener new_virtual_keyboard;
+	struct wl_list virtual_keyboards;
 };
 
 struct tinywl_output {
@@ -136,6 +141,14 @@ struct tinywl_keyboard {
 
 	struct wl_listener modifiers;
 	struct wl_listener key;
+	struct wl_listener destroy;
+};
+
+struct tinywl_virtual_keyboard {
+	struct wl_list link;
+	struct tinywl_server *server;
+	struct wlr_virtual_keyboard_v1 *wlr_virtual_keyboard;
+
 	struct wl_listener destroy;
 };
 
@@ -631,6 +644,23 @@ void server_new_virtual_pointer(struct wl_listener *listener, void*data){
 	server_new_pointer(server, device);
 }
 
+void server_new_virtual_keyboard(struct wl_listener *listener, void*data){
+	struct tinywl_server *server =
+		wl_container_of(listener, server, new_virtual_keyboard);
+	struct wlr_virtual_keyboard_v1 *wlr_keyboard = data;
+
+	struct tinywl_virtual_keyboard *keyboard = malloc(sizeof(struct tinywl_virtual_keyboard));
+	keyboard->wlr_virtual_keyboard = wlr_keyboard;
+	keyboard->server = server;
+
+	wlr_seat_set_keyboard(server->seat,&wlr_keyboard->keyboard);
+	wl_list_insert(&server->virtual_keyboards, &keyboard->link);
+
+	struct wlr_input_device *device = &wlr_keyboard->keyboard.base;
+
+	server_new_keyboard(server, device);
+}
+
 static void server_new_input(struct wl_listener *listener, void *data) {
 	/* This event is raised by the backend when a new input device becomes
 	 * available. */
@@ -653,6 +683,9 @@ static void server_new_input(struct wl_listener *listener, void *data) {
 	uint32_t caps = WL_SEAT_CAPABILITY_POINTER;
 	if (!wl_list_empty(&server->keyboards)) {
 		caps |= WL_SEAT_CAPABILITY_KEYBOARD;
+	}
+	if (!wl_list_empty(&server->virtual_keyboards)){
+		caps |= WL_SEAT_CAPABILITY_TOUCH;
 	}
 	wlr_seat_set_capabilities(server->seat, caps);
 }
@@ -1405,6 +1438,13 @@ int main(int argc, char *argv[]) {
 	wl_list_init(&server.keyboards);
 	server.new_input.notify = server_new_input;
 	wl_signal_add(&server.backend->events.new_input, &server.new_input);
+
+	server.virtual_keyboard_manager = wlr_virtual_keyboard_manager_v1_create(server.wl_display);
+	server.new_virtual_keyboard.notify = server_new_virtual_keyboard;
+	wl_signal_add(&server.virtual_keyboard_manager->events.new_virtual_keyboard,
+	&server.new_virtual_keyboard);
+	wl_list_init(&server.virtual_keyboards);
+
 	server.seat = wlr_seat_create(server.wl_display, "seat0");
 	server.request_cursor.notify = seat_request_cursor;
 	wl_signal_add(&server.seat->events.request_set_cursor,
