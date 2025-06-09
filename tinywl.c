@@ -36,6 +36,7 @@
 #include <wlr/types/wlr_data_control_v1.h>
 #include <wlr/types/wlr_xdg_activation_v1.h>
 #include <wlr/types/wlr_fractional_scale_v1.h>
+#include <wlr/types/wlr_virtual_pointer_v1.h>
 #include <libinput.h>
 #include "config_tinywl.h"
 
@@ -90,6 +91,9 @@ struct tinywl_server {
 	struct wlr_output_manager_v1 *output_manager;
 	struct wl_listener output_manager_apply;
 	struct wl_listener output_manager_test;
+
+	struct wlr_virtual_pointer_manager_v1 *virtual_pointer_manager;
+	struct wl_listener new_virtual_pointer;
 };
 
 struct tinywl_output {
@@ -614,6 +618,17 @@ static void server_new_pointer(struct tinywl_server *server,
     }
   }
 	wlr_cursor_attach_input_device(server->cursor, device);
+}
+
+void server_new_virtual_pointer(struct wl_listener *listener, void*data){
+	struct tinywl_server *server =
+		wl_container_of(listener, server, new_virtual_pointer);
+	struct wlr_virtual_pointer_v1_new_pointer_event *event = data;
+
+	struct wlr_virtual_pointer_v1 *pointer = event->new_pointer;
+
+	struct wlr_input_device *device = &pointer->pointer.base;
+	server_new_pointer(server, device);
 }
 
 static void server_new_input(struct wl_listener *listener, void *data) {
@@ -1332,6 +1347,11 @@ int main(int argc, char *argv[]) {
 	wl_signal_add(&server.xdg_shell->events.new_toplevel, &server.new_xdg_toplevel);
 	server.new_xdg_popup.notify = server_new_xdg_popup;
 	wl_signal_add(&server.xdg_shell->events.new_popup, &server.new_xdg_popup);
+
+	server.virtual_pointer_manager = wlr_virtual_pointer_manager_v1_create(server.wl_display);
+	server.new_virtual_pointer.notify = server_new_virtual_pointer;
+	wl_signal_add(&server.virtual_pointer_manager->events.new_virtual_pointer,
+	&server.new_virtual_pointer);
 
 	server.output_manager = wlr_output_manager_v1_create(server.wl_display);
 	server.output_manager_apply.notify = output_manager_apply;
