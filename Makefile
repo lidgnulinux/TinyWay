@@ -8,7 +8,7 @@ LIBS!=$(PKG_CONFIG) --libs $(PKGS)
 all: tinywl
 
 tinywl.o: tinywl.c protocols.h
-	$(CC) -c $< -g -Werror $(CFLAGS) -I. -DWLR_USE_UNSTABLE -include protocols.h -o $@
+	$(CC) -c $< -g -Werror $(CFLAGS) -I. -DWLR_USE_UNSTABLE -o $@
 tinywl: tinywl.o
 	$(CC) $^ -g -Werror $(CFLAGS) $(LDFLAGS) $(LIBS) -o $@
 
